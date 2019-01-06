@@ -22,6 +22,8 @@ Applies Collapse Decimate Modifier to all selected objects
 
 - Remove Doubles and Degenerates:
 Does said thing in all selected objects
+- Delete Loose:
+Does said thing (+removing loose triangles) in all selected objects
 - Planar Decimate:
 Applies Planar Decimate Modifier to all selected objects, giving you the option to change the max angle
 - Convert to Triangles:

@@ -154,16 +154,17 @@ class SLCleanup(bpy.types.Operator):
     bl_idname = "unregi.cleanup"
     bl_label = "Remove Doubles and dissolve degenerates in all selected objects"
     bl_options = {'REGISTER', 'UNDO'}
-    distance = bpy.props.FloatProperty(name="Distance", default=0.00001, min=0.000001, max=0.01)
+    distance = bpy.props.FloatProperty(name="Distance", default=0.01, min=0.001, max=1.0)
 
     def execute(self, context):
         objects = [o.data for o in context.selected_objects if o.type == 'MESH']
         num_before = sum(len(m.vertices) for m in objects)
+        distance = self.distance / 1000
         bm = bmesh.new()
         for o in objects:
             bm.from_mesh(o)
-            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=self.distance)
-            bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=self.distance)
+            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=distance)
+            bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=distance)
             bm.to_mesh(o)
             o.update()
             bm.clear()
@@ -225,6 +226,25 @@ class SLMakeQuads(bpy.types.Operator):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.tris_convert_to_quads()
             bpy.ops.object.editmode_toggle()
+        return {'FINISHED'}
+
+class SLDeleteLoose(bpy.types.Operator):
+    """Delete Loose Vertices / Edges / Faces"""
+    bl_idname = "unregi.deleteloose"
+    bl_label = "Delete loose vertices, edges and faces"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        objects = [o for o in context.selected_objects if o.type == 'MESH']
+        num_before = sum(len(m.data.vertices) for m in objects)
+        for obj in objects:
+            context.scene.objects.active = obj
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.delete_loose(use_faces=True)
+            bpy.ops.object.editmode_toggle()
+        num_deleted = num_before - sum(len(m.data.vertices) for m in objects)
+        self.report({'INFO'}, "%d from %d vertices removed" % (num_deleted, num_before))
         return {'FINISHED'}
 
 class SLPlanarDecimate(bpy.types.Operator):
@@ -303,6 +323,7 @@ class UnregisPanel(Panel):
         layout.operator('unregi.decimate', text='Decimate')
         layout.label(text='CleanUp', icon='MOD_WAVE')
         layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
+        layout.operator('unregi.deleteloose', text='Delete Loose')
         layout.operator('unregi.planardec', text='Planar Decimate')
         layout.operator('unregi.maketris', text='Convert to Triangles')
         layout.operator('unregi.makequads', text='Triangles to Quads')
@@ -318,6 +339,7 @@ def register():
     bpy.utils.register_class(SLMergeMeshes)
     bpy.utils.register_class(SLConvexHull)
     bpy.utils.register_class(SLDecimate)
+    bpy.utils.register_class(SLDeleteLoose)
     bpy.utils.register_class(UnregisPanel)
 
 def unregister():
@@ -331,6 +353,7 @@ def unregister():
     bpy.utils.unregister_class(SLMergeMeshes)
     bpy.utils.unregister_class(SLConvexHull)
     bpy.utils.unregister_class(SLDecimate)
+    bpy.utils.unregister_class(SLDeleteLoose)
     bpy.utils.unregister_class(UnregisPanel)
 
 if __name__ == '__main__':
