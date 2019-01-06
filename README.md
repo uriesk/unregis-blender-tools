@@ -53,6 +53,6 @@ This means that using the LOD model as physics model is discouraged, because deg
 
 - The Analyze button in the Physics tab, that is supposed to create a optimized convex shape out of the physics shape, generates Havok specific meshes that are unusable in other environments like OpenSim.
 
-- Creating an own physics shape (with shapes being convex if possible) is recommended. Blender has a convex hull function (press space in Edit mode and type it). The smallest possible useful physics shape would therefor be one convex hull shape per object that is decimated to 4 triangles (smallest possible manifold object). Having a good physics shape solves lots of random weird upload failures.
+- Creating an own physics shape (with shapes being convex if possible) is recommended. The smallest possible useful physics shape would therefor be one convex hull shape per object that is decimated to 4 triangles (smallest possible manifold object). Having a good physics shape solves lots of random weird upload failures.
 
 - Worn rigged mesh is displayed differently by viewers than unrigged mesh. The Low and Lowest LOD levels of rigged mesh never gets shown, so those can be 0 without problems.
