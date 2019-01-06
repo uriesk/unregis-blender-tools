@@ -44,7 +44,7 @@ Does said thing in all selected objects
 
 - The link order is determinded by the order in the collada file (select "sort by object name" on collada export, or you will get a random order).
 
-- No n-gons allowed, Make sure the mesh consists only of tris and quads (to make sure of that, first convert the mesh to tris and then use the tris-to-quads function).
+- No n-gons allowed, Make sure the mesh consists only of tris and quads (to make sure of that, first convert the mesh to tris and then use the tris-to-quads function - the tris-to-quad function alone would leave n-gons around if its not able to make a quad out of it).
 
 - LOD models have to use the same amounts of materials as the original model.
 
@@ -56,3 +56,19 @@ This means that using the LOD model as physics model is discouraged, because deg
 - Creating an own physics shape (with shapes being convex if possible) is recommended. The smallest possible useful physics shape would therefor be one convex hull shape per object that is decimated to 4 triangles (smallest possible manifold object). Having a good physics shape solves lots of random weird upload failures.
 
 - Worn rigged mesh is displayed differently by viewers than unrigged mesh. The Low and Lowest LOD levels of rigged mesh never gets shown, so those can be 0 without problems.
+
+- Prims created in SL/OpenSim have more polygons than they appear to have. A cube in SL has 48 triangles. This is due to the fact that they can be cut, twisted, hollow, and modified in other ways. Additionally to this, they do not have LOD models. A cube in SL has therefor the exact same complexity as a mesh with 48 faces on all LOD levels — this means that by simply exporting as collada -> uploading it again, you can drastically reduce their complexity, without ever opening them in Blender, by choosing different LoD levels — to merge triangles, open it in Blender -> Slect all -> Remove Doubles and Degenerates -> Planar Decimate and a cube of 48 triangles has now 12 (2 triangles per side)
+
+- Physics shape get scaled up to fit the bounding box of the object. Note: This doesn't mean that the Physics Shape can not be smaller than the original object, it just means that it will be scaled to have the same height and width.
+
+- Setting an object on Phantom does not deactivate it's physics. Collisions still get calculated and collision events still fire. Setting physics shape to None is the only way to deactive it, and this is just possible on child prims.
+
+- When using textures with transparencies, set them on Alpha Mode masking after uploading wherever possible. Default alpha mode blending is havier on resources and multiple alpha-blending textures beneath each other tend to produce glitches (the order of the textures gets wrong, i.e. a worn hair causes your top to disappear wherever it overlapses)
+
+- Transparency set to 100% is better than using a transparent texture -> a transparent texture with alpha mode masking is better than a transparent texture with alpha mode blending
+
+- if you still have to use multiple alpha mode blending textures beneath each other, you can avoid alpha glitches by putting an additional layer between, making it have a transparent texture and setting this to alpha mode masking (mesh bodies with onion layers do that)
+
+- triangles that are invisible because they are inside another shape or completely behind another object and not seen by the viewer are less heavy on calculations than one that's seen. Therefore the pure triangle count is not an indicator of how much lag the mesh is causing.
+
+- GPUs do not know quads or n-gons, they only know triangles and convert polygons to triangles if needed. Shapes consisting of quads do not use less resources than shapes consisting of just triangles, but they use less disk space and less bandwidth
