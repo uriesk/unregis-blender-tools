@@ -31,7 +31,7 @@ Does said thing in all selected objects
 
 ## Installation
 
-1. Download unregis-addon.py
+1. Download [blender-script.py](https://github.com/uriesk/unregis-blender-tools/raw/master/blender-script.py)
 2. Open Blender
 3. Go to File -> User Preferences -> Add-ons
 4. Click on "Install Add-on from file" and select unregis-addon.py
