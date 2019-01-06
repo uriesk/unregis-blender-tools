@@ -10,23 +10,23 @@ Sets all materials to shadeless for the sole purpose to see all details in Mater
 - Remove unused materials
 Removes materials that do not get used (same thing happenes if you save a file and open it again)
 
-- Merge Objects
+- Merge Objects:
 Join all selected object with preserving of the UVmaps
-- Merge Same Materials
+- Merge Same Materials:
 Merge Materialslots in the selected object together that use the same texture
 
-- Create Convex Hulls
+- Create Convex Hulls:
 Convert all objects selected to convex hulls, deleting their materials
-- Decimate
+- Decimate:
 Applies Collapse Decimate Modifier to all selected objects
 
-- Remove Doubles and Degenerates
+- Remove Doubles and Degenerates:
 Does said thing in all selected objects
-- Planar Decimate
+- Planar Decimate:
 Applies Planar Decimate Modifier to all selected objects, giving you the option to change the max angle
-- Convert to Triangles
+- Convert to Triangles:
 Does said thing in all selected objects
-- Triangles to Quads
+- Triangles to Quads:
 Does said thing in all selected objects
 
 ## Installation
