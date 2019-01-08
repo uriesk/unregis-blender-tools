@@ -116,6 +116,8 @@ class SLMergeMaterials(bpy.types.Operator):
             texture = getTextureOfMaterialSlot(mobject.material_slots[slot])
             if self.diffuse:
                 #if we should care about the color too, just add it to the string
+                if texture is None:
+                    texture = ""
                 texture = texture + self.getDiffuseColorOfMaterialSlot(mobject.material_slots[slot])
             if texture not in textures:
                 textures.append(texture)
