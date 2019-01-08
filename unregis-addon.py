@@ -93,6 +93,11 @@ class SLMergeMaterials(bpy.types.Operator):
     bl_idname = "unregi.mergematslot"
     bl_label = "Merge Material slots that use same textures"
     bl_options = {'REGISTER', 'UNDO'}
+    diffuse = bpy.props.BoolProperty(name="Unique Diffuse Colors", default=False)
+
+    def getDiffuseColorOfMaterialSlot(self, matslot):
+        color = matslot.material.diffuse_color
+        return (str(color.r) + str(color.g) + str(color.b))
     
     def execute(self, context):
         mobject = context.scene.objects.active 
@@ -109,6 +114,9 @@ class SLMergeMaterials(bpy.types.Operator):
                 nummat -= 1
                 continue
             texture = getTextureOfMaterialSlot(mobject.material_slots[slot])
+            if self.diffuse:
+                #if we should care about the color too, just add it to the string
+                texture = texture + self.getDiffuseColorOfMaterialSlot(mobject.material_slots[slot])
             if texture not in textures:
                 textures.append(texture)
                 slot += 1
