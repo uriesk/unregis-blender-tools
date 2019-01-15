@@ -29,12 +29,12 @@ bl_info = {
     "name": "unregis AddOn",
     "author": "unregi Resident",
     "description": "Tools for merging and simplifying multiple objects to fit OpenSim / SL",
-    "version": (0, 1),
+    "version": (0, 2),
     "category": "Mesh",
+    "blender": (2, 79, 0),
 }
 
 import bpy
-from bpy.types import Panel
 
 import bmesh
 import math
@@ -277,13 +277,13 @@ class SLPlanarDecimate(bpy.types.Operator):
         for o in objects:
             self.cleanAllDecimateModifiers(o)
             ctx['acive_object'] = o
-            modifier= o.modifiers.new(modifierName,'DECIMATE')
+            modifier = o.modifiers.new(modifierName,'DECIMATE')
             modifier.decimate_type = 'DISSOLVE'
             modifier.angle_limit = self.angle * 2 * math.pi / 360
             print("Planar decimate of mesh " + o.name + " by " + str(modifier.angle_limit))
             bpy.ops.object.modifier_apply(modifier=modifier.name)
-        return {'FINISHED'}
         context.scene.update()
+        return {'FINISHED'}
 
 class SLDecimate(bpy.types.Operator):
     """Decimate Objects"""
@@ -305,15 +305,15 @@ class SLDecimate(bpy.types.Operator):
         for o in objects:
             self.cleanAllDecimateModifiers(o)
             ctx['acive_object'] = o
-            modifier= o.modifiers.new(modifierName,'DECIMATE')
+            modifier = o.modifiers.new(modifierName,'DECIMATE')
             modifier.decimate_type = 'COLLAPSE'
             modifier.ratio = self.ratio
             print("Decimate of mesh " + o.name + " by " + str(modifier.ratio))
             bpy.ops.object.modifier_apply(modifier=modifier.name)
-        return {'FINISHED'}
         context.scene.update()
+        return {'FINISHED'}
 
-class UnregisPanel(Panel):
+class UnregisPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_label = 'unregis Tools'

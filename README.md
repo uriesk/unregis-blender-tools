@@ -1,7 +1,7 @@
 # unregis Tools
 Blender AddOn and script (does the same thing as the AddOn) for optimizing and simplfying meshes for blender for use in OpenSim and SL.
 
-![Screenshot](screenshot.png)
+![Screenshot](images/screenshot.png)
 
 ## What do the buttons do
 
