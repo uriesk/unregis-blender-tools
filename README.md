@@ -6,9 +6,10 @@ Blender AddOn and script (does the same thing as the AddOn) for optimizing and s
 ![Screenshot-280](images/screenshot-280.png)
 
 ## What do the buttons do
+(buttons that modify objects just show when objects are selected)
 
 - Make Materials Shadeless
-Sets all materials to shadeless for the sole purpose to see all details in Material view
+Sets all materials to shadeless for the sole purpose to see all details in Material view. This buttons is not available in Blender 2.80, because it has great native shading options that makes it obsolete.
 - Remove unused Materials
 Removes materials that do not get used (same thing happenes if you save a file and open it again)
 - Remove unused Materialslots
