@@ -44,7 +44,7 @@ if bpy.app.version < (2, 80):
 else:
     from .unregis_addon_280 import *
 
-def register_icons():
+def register_icons(icons_dict):
     pcoll = bpy.utils.previews.new()
     icons_dir = os.path.join(os.path.dirname(__file__), "icons")
     for f in os.listdir(icons_dir):
@@ -54,17 +54,24 @@ def register_icons():
             icons_dict[name] = {"icon_value": pcoll[name].icon_id}
     icons_dict["pcoll"] = pcoll
 
-def unregister_icons():
+def unregister_icons(icons_dict):
     bpy.utils.previews.remove(icons_dict["pcoll"])
     icons_dict.clear()
-
-cor_register = register
-def register():
-    register_icons()
-    cor_register()
 
 cor_unregister = unregister
 def unregister():
     cor_unregister()
-    unregister_icons()
+    unregister_icons(icons_dict)
+
+cor_register = register
+def register():
+    try:
+        register_icons(icons_dict)
+        cor_register()
+    except Exception as e:
+        try:
+            unregister()
+        except:
+            pass
+        raise e
 

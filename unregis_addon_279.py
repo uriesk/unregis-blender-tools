@@ -40,26 +40,13 @@ import bmesh
 import math
 import random
 
-def getTexturesOfObject(object):
-    textures = []
-    ctx['active_object'] = object
-    for matslot in object.material_slots:
-        texture = getTextureOfMaterialSlot(matslot)
-        print(object.name, 'has material',
-            matslot.material.name, 'that uses image',
-            texture)
-        if texture not in textures:
-            textures.append(texture)
-    return textures
-
-def getTextureOfMaterialSlot(matslot):
-    for texslot in matslot.material.texture_slots:
-        if texslot is not None and texslot.texture.type == 'IMAGE':
-            if texslot.texture.image is not None:
-                return texslot.texture.image.name
-                print(object.name, 'has material',
-                    matslot.material.name, 'that uses image',
-                    texslot.texture.image.name)
+icons_dict = {
+        "main": {"icon": 'OUTLINER_DATA_CAMERA'},
+        "view": {"icon": 'PARTICLEMODE'},
+        "merge": {"icon": 'MOD_SOLIDIFY'},
+        "physics": {"icon": 'MESH_ICOSPHERE'},
+        "cleanup": {"icon": 'MOD_WAVE'},
+}
 
 class SLMergeMeshes(bpy.types.Operator):
     """Merge slecte objects"""
@@ -68,11 +55,11 @@ class SLMergeMeshes(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        ctx = context.copy()
         meshlist = [o for o in context.selected_objects if o.type == 'MESH']
         if len(meshlist) <= 1:
-            print("No objects to join")
+            self.report({'WARNING'}, "No multiple meshes to merge selected")
             return {'CANCELLED'}
+        ctx = context.copy()
         #rename UV maps
         salt = str(random.randint(100, 999))
         uvname = 'UVMap' + salt
@@ -99,6 +86,15 @@ class SLMergeMaterials(bpy.types.Operator):
         color = matslot.material.diffuse_color
         return (str(color.r) + str(color.g) + str(color.b))
     
+    def getTextureOfMaterialSlot(self, matslot):
+        for texslot in matslot.material.texture_slots:
+            if texslot is not None and texslot.texture.type == 'IMAGE':
+                if texslot.texture.image is not None:
+                    return texslot.texture.image.name
+                    print(object.name, 'has material',
+                        matslot.material.name, 'that uses image',
+                        texslot.texture.image.name)
+
     def execute(self, context):
         mobject = context.scene.objects.active 
         textures = []
@@ -113,7 +109,7 @@ class SLMergeMaterials(bpy.types.Operator):
                 bpy.ops.object.material_slot_remove()
                 nummat -= 1
                 continue
-            texture = getTextureOfMaterialSlot(mobject.material_slots[slot])
+            texture = self.getTextureOfMaterialSlot(mobject.material_slots[slot])
             if self.diffuse:
                 #if we should care about the color too, just add it to the string
                 if texture is None:
@@ -168,6 +164,9 @@ class SLCleanup(bpy.types.Operator):
 
     def execute(self, context):
         objects = [o.data for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
         num_before = sum(len(m.vertices) for m in objects)
         distance = self.distance / 1000
         bm = bmesh.new()
@@ -191,13 +190,16 @@ class SLConvexHull(bpy.types.Operator):
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
         for obj in objects:
             context.scene.objects.active = obj
             #make convex
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.convex_hull()
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='OBJECT')
             #delete materials
             slot = 0
             nummat = len(obj.material_slots)
@@ -214,12 +216,20 @@ class SLMakeTris(bpy.types.Operator):
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
+        num_before = 0
+        num_after = 0
         for obj in objects:
+            num_before += len(obj.data.polygons)
             context.scene.objects.active = obj
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.quads_convert_to_tris()
             bpy.ops.object.editmode_toggle()
+            num_after += len(obj.data.polygons)
+        self.report({'INFO'}, "Conversion from %d to %d faces" % (num_before, num_after))
         return {'FINISHED'}
     
 class SLMakeQuads(bpy.types.Operator):
@@ -230,12 +240,18 @@ class SLMakeQuads(bpy.types.Operator):
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
+        num_before = sum(len(m.data.polygons) for m in objects)
         for obj in objects:
             context.scene.objects.active = obj
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.tris_convert_to_quads()
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='OBJECT')
+        num_after = sum(len(m.data.polygons) for m in objects)
+        self.report({'INFO'}, "Conversion from %d to %d faces" % (num_before, num_after))
         return {'FINISHED'}
 
 class SLDeleteLoose(bpy.types.Operator):
@@ -246,13 +262,16 @@ class SLDeleteLoose(bpy.types.Operator):
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
         num_before = sum(len(m.data.vertices) for m in objects)
         for obj in objects:
             context.scene.objects.active = obj
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.delete_loose(use_faces=True)
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='OBJECT')
         num_deleted = num_before - sum(len(m.data.vertices) for m in objects)
         self.report({'INFO'}, "%d from %d vertices removed" % (num_deleted, num_before))
         return {'FINISHED'}
@@ -272,9 +291,15 @@ class SLPlanarDecimate(bpy.types.Operator):
     def execute(self, context):
         ctx = context.copy()
         objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
         modifiers = []
         modifierName='DecimateMod'
+        num_before = 0
+        num_after = 0
         for o in objects:
+            num_before += len(o.data.vertices)
             self.cleanAllDecimateModifiers(o)
             ctx['acive_object'] = o
             modifier = o.modifiers.new(modifierName,'DECIMATE')
@@ -282,6 +307,8 @@ class SLPlanarDecimate(bpy.types.Operator):
             modifier.angle_limit = self.angle * 2 * math.pi / 360
             print("Planar decimate of mesh " + o.name + " by " + str(modifier.angle_limit))
             bpy.ops.object.modifier_apply(modifier=modifier.name)
+            num_after += len(o.data.vertices)
+        self.report({'INFO'}, "%d from %d vertices removed" % (num_before - num_after, num_before))
         context.scene.update()
         return {'FINISHED'}
 
@@ -300,16 +327,23 @@ class SLDecimate(bpy.types.Operator):
     def execute(self, context):
         ctx = context.copy()
         objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
         modifiers = []
         modifierName='DecimateMod'
+        num_before = 0
+        num_after = 0
         for o in objects:
+            num_before += len(o.data.vertices)
             self.cleanAllDecimateModifiers(o)
             ctx['acive_object'] = o
             modifier = o.modifiers.new(modifierName,'DECIMATE')
             modifier.decimate_type = 'COLLAPSE'
             modifier.ratio = self.ratio
-            print("Decimate of mesh " + o.name + " by " + str(modifier.ratio))
             bpy.ops.object.modifier_apply(modifier=modifier.name)
+            num_after += len(o.data.vertices)
+        self.report({'INFO'}, "%d from %d vertices removed" % (num_before - num_after, num_before))
         context.scene.update()
         return {'FINISHED'}
 
@@ -322,16 +356,16 @@ class UnregisPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text='View', icon='PARTICLEMODE')
-        layout.operator('unregi.shadeless', text='Make Materials Shadeless')
+        layout.label(text='View', **icons_dict["view"])
+        layout.operator('unregi.shadeless', text='Make Materials shadeless')
         layout.operator('unregi.remmat', text='Remove unused Materials')
-        layout.label(text='Merge', icon='MOD_SOLIDIFY')
+        layout.label(text='Merge', **icons_dict["merge"])
         layout.operator('unregi.mergemesh', text='Merge Objects')
         layout.operator('unregi.mergematslot', text='Merge Same Materials')
-        layout.label(text='Physics Shape', icon='MESH_ICOSPHERE')
+        layout.label(text='Physics Shape', **icons_dict["physics"])
         layout.operator('unregi.convexhull', text='Create Convex Hulls')
         layout.operator('unregi.decimate', text='Decimate')
-        layout.label(text='CleanUp', icon='MOD_WAVE')
+        layout.label(text='CleanUp', **icons_dict["cleanup"])
         layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
         layout.operator('unregi.deleteloose', text='Delete Loose')
         layout.operator('unregi.planardec', text='Planar Decimate')

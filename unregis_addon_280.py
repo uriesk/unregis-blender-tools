@@ -28,7 +28,7 @@
 bl_info = {
     "name": "unregis AddOn",
     "author": "unregi Resident",
-    "description": "Tools for merging and simplifying multiple objects to fit OpenSim / sl",
+    "description": "Tools for merging and simplifying multiple objects to fit OpenSim / SL",
     "version": (0, 2),
     "category": "Mesh",
     "blender": (2, 80, 0),
@@ -40,28 +40,13 @@ import bmesh
 import math
 import random
 
-icons_dict = {"main": {"icon": 'OUTLINER_DATA_CAMERA'}}
-
-def getTexturesOfObject(object):
-    textures = []
-    ctx['active_object'] = object
-    for matslot in object.material_slots:
-        texture = getTextureOfMaterialSlot(matslot)
-        print(object.name, 'has material',
-            matslot.material.name, 'that uses image',
-            texture)
-        if texture not in textures:
-            textures.append(texture)
-    return textures
-
-def getTextureOfMaterialSlot(matslot):
-    for texslot in matslot.material.texture_slots:
-        if texslot is not None and texslot.texture.type == 'IMAGE':
-            if texslot.texture.image is not None:
-                return texslot.texture.image.name
-                print(object.name, 'has material',
-                    matslot.material.name, 'that uses image',
-                    texslot.texture.image.name)
+icons_dict = {
+        "main": {"icon": 'OUTLINER_DATA_CAMERA'},
+        "view": {"icon": 'PARTICLEMODE'},
+        "merge": {"icon": 'MOD_SOLIDIFY'},
+        "physics": {"icon": 'MESH_ICOSPHERE'},
+        "cleanup": {"icon": 'MOD_WAVE'},
+}
 
 class UNREGI_OT_slMergeMeshes(bpy.types.Operator):
     """Merge slecte objects"""
@@ -102,6 +87,15 @@ class UNREGI_OT_slMergeMaterials(bpy.types.Operator):
         color = matslot.material.diffuse_color
         return (str(color.r) + str(color.g) + str(color.b))
     
+    def getTextureOfMaterialSlot(self, matslot):
+        for texslot in matslot.material.texture_slots:
+            if texslot is not None and texslot.texture.type == 'IMAGE':
+                if texslot.texture.image is not None:
+                    return texslot.texture.image.name
+                    print(object.name, 'has material',
+                        matslot.material.name, 'that uses image',
+                        texslot.texture.image.name)
+
     def execute(self, context):
         mobject = context.view_layer.objects.active 
         textures = []
@@ -116,7 +110,7 @@ class UNREGI_OT_slMergeMaterials(bpy.types.Operator):
                 bpy.ops.object.material_slot_remove()
                 nummat -= 1
                 continue
-            texture = getTextureOfMaterialSlot(mobject.material_slots[slot])
+            texture = self.getTextureOfMaterialSlot(mobject.material_slots[slot])
             if self.diffuse:
                 #if we should care about the color too, just add it to the string
                 if texture is None:
@@ -147,12 +141,15 @@ class UNREGI_OT_slDeleteUnusedMaterials(bpy.types.Operator):
 
     def execute(self, context):
         objects = [o.data for o in context.selected_objects if o.type == 'MESH']
+        num_deleted = 0
         if objects:
             #TODO delete unused material slots
             print("looooll")
         for material in bpy.data.materials:
             if not material.users:
+                num_deleted += 1
                 bpy.data.materials.remove(material)
+        self.report({'INFO'}, "%d unused Materials removed" % (num_deleted))
         return {'FINISHED'}
 
 class UNREGI_OT_slCleanup(bpy.types.Operator):
@@ -360,15 +357,15 @@ class UNREGI_MT_mainMenu(bpy.types.Menu):
         layout = self.layout
         layout.label(text='unregis Tools')
         layout.separator()
-        layout.label(text='View', icon='PARTICLEMODE')
+        layout.label(text='View', **icons_dict["view"])
         layout.operator('unregi.remmat', text='Remove unused Materials')
-        layout.label(text='Merge', icon='MOD_SOLIDIFY')
+        layout.label(text='Merge', **icons_dict["merge"])
         layout.operator('unregi.mergemesh', text='Merge Objects')
         layout.operator('unregi.mergematslot', text='Merge Same Materials')
-        layout.label(text='Physics Shape', icon='MESH_ICOSPHERE')
+        layout.label(text='Physics Shape', **icons_dict["physics"])
         layout.operator('unregi.convexhull', text='Create Convex Hulls')
         layout.operator('unregi.decimate', text='Decimate')
-        layout.label(text='CleanUp', icon='MOD_WAVE')
+        layout.label(text='CleanUp', **icons_dict["cleanup"])
         layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
         layout.operator('unregi.deleteloose', text='Delete Loose')
         layout.operator('unregi.planardec', text='Planar Decimate')
