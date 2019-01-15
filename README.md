@@ -1,14 +1,18 @@
 # unregis Tools
 Blender AddOn and script (does the same thing as the AddOn) for optimizing and simplfying meshes for blender for use in OpenSim and SL.
-
-![Screenshot](images/screenshot.png)
+## Blender 2.7x
+![Screenshot-279](images/screenshot-279.png)
+## Blender 2.80
+![Screenshot-280](images/screenshot-280.png)
 
 ## What do the buttons do
 
 - Make Materials Shadeless
 Sets all materials to shadeless for the sole purpose to see all details in Material view
-- Remove unused materials
+- Remove unused Materials
 Removes materials that do not get used (same thing happenes if you save a file and open it again)
+- Remove unused Materialslots
+Removes Materialslots from selected objects that are not assigned to any faces
 
 - Merge Objects:
 Join all selected object with preserving of the UVmaps
@@ -33,10 +37,10 @@ Does said thing in all selected objects
 
 ## Installation
 
-1. Download [unregis-addon.py](https://github.com/uriesk/unregis-blender-tools/raw/master/unregis-addon.py)
+1. Download [unregis-blender-tools-master.zip](https://github.com/uriesk/unregis-blender-tools/archive/master.zip)
 2. Open Blender
-3. Go to File -> User Preferences -> Add-ons
-4. Click on "Install Add-on from file" and select unregis-addon.py
+3. Go to File -> User Preferences -> Add-Ons (or Edit-> Preferences -> Add-Ons in Blender 2.80)
+4. Click on "Install Add-on from file" and select the downloaded zip-file
 5. Check the checkbox on the new appearing "Mesh:unregis AddOn" to activate it
 5. Now you have new buttons in the 3d view when in object mode
 

@@ -69,8 +69,8 @@ class UNREGI_OT_slMergeMeshes(bpy.types.Operator):
         #join into active object
         ctx['acive_object'] = meshlist[0]
         ctx['selected_objects'] = meshlist
-        #TODO what is this doing?
-        ctx['selected_editable_bases'] = [context.scene_layer.object_bases[o.name] for o in meshlist]
+        #TODO do we really not need this in 2.80?
+        #ctx['selected_editable_bases'] = [context.scene.object_bases[o.name] for o in meshlist]
         bpy.ops.object.join(ctx)
         context.view_layer.update()
         self.report({'INFO'}, "%d meshes joined" % (len(meshlist),))
@@ -132,7 +132,7 @@ class UNREGI_OT_slMergeMaterials(bpy.types.Operator):
         new_nummat = len(mobject.material_slots)
         self.report({'INFO'}, "%d materials merged, %d materials left" % (before_nummat - new_nummat, new_nummat))
         return {'FINISHED'}
-    
+
 class UNREGI_OT_slDeleteUnusedMaterials(bpy.types.Operator):
     """Remove unused Materials"""
     bl_idname = "unregi.remmat"
@@ -140,16 +140,42 @@ class UNREGI_OT_slDeleteUnusedMaterials(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        objects = [o.data for o in context.selected_objects if o.type == 'MESH']
         num_deleted = 0
-        if objects:
-            #TODO delete unused material slots
-            print("looooll")
         for material in bpy.data.materials:
             if not material.users:
                 num_deleted += 1
                 bpy.data.materials.remove(material)
-        self.report({'INFO'}, "%d unused Materials removed" % (num_deleted))
+        self.report({'INFO'}, "%d Materials removed" % (num_deleted))
+        return {'FINISHED'}
+
+class UNREGI_OT_slDeleteUnusedMaterialslots(bpy.types.Operator):
+    """Remove unused Materialslots"""
+    bl_idname = "unregi.remmatslot"
+    bl_label = "Remove Materialslots that are not used"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
+        num_deleted = 0
+        for obj in objects:
+            faces = obj.data.polygons
+            used_material_indices = [0 for n in range(len(faces))]
+            faces.foreach_get('material_index', used_material_indices)
+            used_material_indices = set(used_material_indices)
+            all_slots = set(n for n in range(len(obj.material_slots)))
+            unused_slot_indices = all_slots - used_material_indices
+            ctx = context.copy()
+            ctx['object'] = obj
+            unused_slot_indices = list(unused_slot_indices)
+            unused_slot_indices.sort(reverse=True)
+            for slot_index in unused_slot_indices:
+                obj.active_material_index = slot_index
+                bpy.ops.object.material_slot_remove(ctx)
+                num_deleted += 1
+        self.report({'INFO'}, "%d Materialslots removed" % (num_deleted))
         return {'FINISHED'}
 
 class UNREGI_OT_slCleanup(bpy.types.Operator):
@@ -358,19 +384,22 @@ class UNREGI_MT_mainMenu(bpy.types.Menu):
         layout.label(text='unregis Tools')
         layout.separator()
         layout.label(text='View', **icons_dict["view"])
-        layout.operator('unregi.remmat', text='Remove unused Materials')
-        layout.label(text='Merge', **icons_dict["merge"])
-        layout.operator('unregi.mergemesh', text='Merge Objects')
-        layout.operator('unregi.mergematslot', text='Merge Same Materials')
-        layout.label(text='Physics Shape', **icons_dict["physics"])
-        layout.operator('unregi.convexhull', text='Create Convex Hulls')
-        layout.operator('unregi.decimate', text='Decimate')
-        layout.label(text='CleanUp', **icons_dict["cleanup"])
-        layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
-        layout.operator('unregi.deleteloose', text='Delete Loose')
-        layout.operator('unregi.planardec', text='Planar Decimate')
-        layout.operator('unregi.maketris', text='Convert to Triangles')
-        layout.operator('unregi.makequads', text='Triangles to Quads')
+        if any(o.type == 'MESH' for o in context.selected_objects):
+            layout.operator('unregi.remmatslot', text='Remove unused Materialslots')
+            layout.label(text='Merge', **icons_dict["merge"])
+            layout.operator('unregi.mergemesh', text='Merge Objects')
+            layout.operator('unregi.mergematslot', text='Merge Same Materials')
+            layout.label(text='Physics Shape', **icons_dict["physics"])
+            layout.operator('unregi.convexhull', text='Create Convex Hulls')
+            layout.operator('unregi.decimate', text='Decimate')
+            layout.label(text='CleanUp', **icons_dict["cleanup"])
+            layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
+            layout.operator('unregi.deleteloose', text='Delete Loose')
+            layout.operator('unregi.planardec', text='Planar Decimate')
+            layout.operator('unregi.maketris', text='Convert to Triangles')
+            layout.operator('unregi.makequads', text='Triangles to Quads')
+        else:
+            layout.operator('unregi.remmat', text='Remove unused Materials')
 
 classes = (
     UNREGI_OT_slMakeTris,
@@ -379,6 +408,7 @@ classes = (
     UNREGI_OT_slPlanarDecimate,
     UNREGI_OT_slMergeMaterials,
     UNREGI_OT_slDeleteUnusedMaterials,
+    UNREGI_OT_slDeleteUnusedMaterialslots,
     UNREGI_OT_slMergeMeshes,
     UNREGI_OT_slConvexHull,
     UNREGI_OT_slDecimate,

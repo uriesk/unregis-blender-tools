@@ -139,9 +139,42 @@ class SLDeleteUnusedMaterials(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        num_deleted = 0
         for material in bpy.data.materials:
             if not material.users:
+                num_deleted += 1
                 bpy.data.materials.remove(material)
+        self.report({'INFO'}, "%d Materials removed" % (num_deleted))
+        return {'FINISHED'}
+
+class SLDeleteUnusedMaterialslots(bpy.types.Operator):
+    """Remove unused Materialslots"""
+    bl_idname = "unregi.remmatslot"
+    bl_label = "Remove Materialslots that are not used"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        objects = [o for o in context.selected_objects if o.type == 'MESH']
+        if not objects:
+            self.report({'WARNING'}, "No meshes selected")
+            return {'CANCELLED'}
+        num_deleted = 0
+        for obj in objects:
+            faces = obj.data.polygons
+            used_material_indices = [0 for n in range(len(faces))]
+            faces.foreach_get('material_index', used_material_indices)
+            used_material_indices = set(used_material_indices)
+            all_slots = set(n for n in range(len(obj.material_slots)))
+            unused_slot_indices = all_slots - used_material_indices
+            ctx = context.copy()
+            ctx['object'] = obj
+            unused_slot_indices = list(unused_slot_indices)
+            unused_slot_indices.sort(reverse=True)
+            for slot_index in unused_slot_indices:
+                obj.active_material_index = slot_index
+                bpy.ops.object.material_slot_remove(ctx)
+                num_deleted += 1
+        self.report({'INFO'}, "%d Materialslots removed" % (num_deleted))
         return {'FINISHED'}
 
 class SLMaterialsShadeless(bpy.types.Operator):
@@ -358,19 +391,22 @@ class UnregisPanel(bpy.types.Panel):
         layout = self.layout
         layout.label(text='View', **icons_dict["view"])
         layout.operator('unregi.shadeless', text='Make Materials shadeless')
-        layout.operator('unregi.remmat', text='Remove unused Materials')
-        layout.label(text='Merge', **icons_dict["merge"])
-        layout.operator('unregi.mergemesh', text='Merge Objects')
-        layout.operator('unregi.mergematslot', text='Merge Same Materials')
-        layout.label(text='Physics Shape', **icons_dict["physics"])
-        layout.operator('unregi.convexhull', text='Create Convex Hulls')
-        layout.operator('unregi.decimate', text='Decimate')
-        layout.label(text='CleanUp', **icons_dict["cleanup"])
-        layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
-        layout.operator('unregi.deleteloose', text='Delete Loose')
-        layout.operator('unregi.planardec', text='Planar Decimate')
-        layout.operator('unregi.maketris', text='Convert to Triangles')
-        layout.operator('unregi.makequads', text='Triangles to Quads')
+        if any(o.type == 'MESH' for o in context.selected_objects):
+            layout.operator('unregi.remmatslot', text='Remove unused Materialslots')
+            layout.label(text='Merge', **icons_dict["merge"])
+            layout.operator('unregi.mergemesh', text='Merge Objects')
+            layout.operator('unregi.mergematslot', text='Merge Same Materials')
+            layout.label(text='Physics Shape', **icons_dict["physics"])
+            layout.operator('unregi.convexhull', text='Create Convex Hulls')
+            layout.operator('unregi.decimate', text='Decimate')
+            layout.label(text='CleanUp', **icons_dict["cleanup"])
+            layout.operator('unregi.cleanup', text='Remove Doubles and Degenerates')
+            layout.operator('unregi.deleteloose', text='Delete Loose')
+            layout.operator('unregi.planardec', text='Planar Decimate')
+            layout.operator('unregi.maketris', text='Convert to Triangles')
+            layout.operator('unregi.makequads', text='Triangles to Quads')
+        else:
+            layout.operator('unregi.remmat', text='Remove unused Materials')
 
 def register():
     bpy.utils.register_class(SLMaterialsShadeless)
@@ -380,6 +416,7 @@ def register():
     bpy.utils.register_class(SLPlanarDecimate)
     bpy.utils.register_class(SLMergeMaterials)
     bpy.utils.register_class(SLDeleteUnusedMaterials)
+    bpy.utils.register_class(SLDeleteUnusedMaterialslots)
     bpy.utils.register_class(SLMergeMeshes)
     bpy.utils.register_class(SLConvexHull)
     bpy.utils.register_class(SLDecimate)
@@ -394,6 +431,7 @@ def unregister():
     bpy.utils.unregister_class(SLPlanarDecimate)
     bpy.utils.unregister_class(SLMergeMaterials)
     bpy.utils.unregister_class(SLDeleteUnusedMaterials)
+    bpy.utils.unregister_class(SLDeleteUnusedMaterialslots)
     bpy.utils.unregister_class(SLMergeMeshes)
     bpy.utils.unregister_class(SLConvexHull)
     bpy.utils.unregister_class(SLDecimate)
