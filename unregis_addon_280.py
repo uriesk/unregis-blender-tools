@@ -40,6 +40,8 @@ import bmesh
 import math
 import random
 
+icons_dict = {"main": {"icon": 'OUTLINER_DATA_CAMERA'}}
+
 def getTexturesOfObject(object):
     textures = []
     ctx['active_object'] = object
@@ -348,7 +350,7 @@ class UNREGI_PT_menuButton(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.menu('UNREGI_MT_mainMenu', icon='OUTLINER_DATA_CAMERA',  text='unregis Tools')
+        layout.menu('UNREGI_MT_mainMenu', **icons_dict["main"],  text='unregis Tools')
 
 class UNREGI_MT_mainMenu(bpy.types.Menu):
     bl_idname = "UNREGI_MT_mainMenu"
