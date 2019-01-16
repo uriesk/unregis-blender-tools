@@ -46,6 +46,7 @@ icons_dict = {
         "merge": {"icon": 'MOD_SOLIDIFY'},
         "physics": {"icon": 'MESH_ICOSPHERE'},
         "cleanup": {"icon": 'MOD_WAVE'},
+        "import": {"icon": 'IMPORT'},
 }
 
 class UNREGI_OT_slMergeMeshes(bpy.types.Operator):
@@ -88,13 +89,9 @@ class UNREGI_OT_slMergeMaterials(bpy.types.Operator):
         return (str(color.r) + str(color.g) + str(color.b))
     
     def getTextureOfMaterialSlot(self, matslot):
-        for texslot in matslot.material.texture_slots:
-            if texslot is not None and texslot.texture.type == 'IMAGE':
-                if texslot.texture.image is not None:
-                    return texslot.texture.image.name
-                    print(object.name, 'has material',
-                        matslot.material.name, 'that uses image',
-                        texslot.texture.image.name)
+        nodes = matslot.material.node_tree.nodes
+        if 'Image Texture' in nodes:
+            return nodes['Image Texture'].image.name
 
     def execute(self, context):
         mobject = context.view_layer.objects.active 
@@ -363,6 +360,16 @@ class UNREGI_OT_slDecimate(bpy.types.Operator):
         context.view_layer.update()
         return {'FINISHED'}
 
+class UNREGI_OT_slDaeImport(bpy.types.Operator):
+    """Import Collada File"""
+    bl_idname = "unregi.daeimport"
+    bl_label = "Import Collada"
+    file_path: bpy.props.StringProperty(name = "File", subtype = "FILE_PATH")
+
+    def execute(self, context):
+        self.report({'INFO'}, "%s selected" % (self.file_path))
+        return {'FINISHED'}
+
 class UNREGI_PT_menuButton(bpy.types.Panel):
     bl_idname = "UNREGI_PT_menuButton"
     bl_label = "unregis Tools"
@@ -400,6 +407,8 @@ class UNREGI_MT_mainMenu(bpy.types.Menu):
             layout.operator('unregi.makequads', text='Triangles to Quads')
         else:
             layout.operator('unregi.remmat', text='Remove unused Materials')
+            #layout.label(text='Import/Export', **icons_dict["import"])
+            #layout.operator('unregi.daeimport', text='Import Collada')
 
 classes = (
     UNREGI_OT_slMakeTris,
@@ -413,6 +422,7 @@ classes = (
     UNREGI_OT_slConvexHull,
     UNREGI_OT_slDecimate,
     UNREGI_OT_slDeleteLoose,
+    #UNREGI_OT_slDaeImport,
     UNREGI_MT_mainMenu,
     UNREGI_PT_menuButton,
 )

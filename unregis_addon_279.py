@@ -91,9 +91,6 @@ class SLMergeMaterials(bpy.types.Operator):
             if texslot is not None and texslot.texture.type == 'IMAGE':
                 if texslot.texture.image is not None:
                     return texslot.texture.image.name
-                    print(object.name, 'has material',
-                        matslot.material.name, 'that uses image',
-                        texslot.texture.image.name)
 
     def execute(self, context):
         mobject = context.scene.objects.active 
