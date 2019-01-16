@@ -388,10 +388,12 @@ class UnregisPanel(bpy.types.Panel):
         layout = self.layout
         layout.label(text='View', **icons_dict["view"])
         layout.operator('unregi.shadeless', text='Make Materials shadeless')
-        if any(o.type == 'MESH' for o in context.selected_objects):
+        num_mesh_selected = sum(1 for o in context.selected_objects if o.type == 'MESH')
+        if num_mesh_selected:
             layout.operator('unregi.remmatslot', text='Remove unused Materialslots')
             layout.label(text='Merge', **icons_dict["merge"])
-            layout.operator('unregi.mergemesh', text='Merge Objects')
+            if num_mesh_selected > 1:
+                layout.operator('unregi.mergemesh', text='Merge Objects')
             layout.operator('unregi.mergematslot', text='Merge Same Materials')
             layout.label(text='Physics Shape', **icons_dict["physics"])
             layout.operator('unregi.convexhull', text='Create Convex Hulls')

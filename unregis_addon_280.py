@@ -364,11 +364,25 @@ class UNREGI_OT_slDaeImport(bpy.types.Operator):
     """Import Collada File"""
     bl_idname = "unregi.daeimport"
     bl_label = "Import Collada"
-    file_path: bpy.props.StringProperty(name = "File", subtype = "FILE_PATH")
+    bl_options = {'UNDO'}
+    import_units: bpy.props.BoolProperty(name="Import Units", default=False)
+    fix_orientation: bpy.props.BoolProperty(name="Fix orientation", default=False)
+    find_chains: bpy.props.BoolProperty(name="Find chains", default=False)
+    auto_connect: bpy.props.BoolProperty(name="Auto connect", default=False)
+    min_chain_length: bpy.props.IntProperty(name="min chain length", default=0, min=0)
+    keep_bind_info: bpy.props.BoolProperty(name="Keep bind info", default=False)
+
+    filename_ext = ".dae"
+    filepath: bpy.props.StringProperty(name = "Filepath", subtype = "FILE_PATH")
+    filter_glob: bpy.props.StringProperty(default="*.dae", options={'HIDDEN'})
 
     def execute(self, context):
-        self.report({'INFO'}, "%s selected" % (self.file_path))
+        bpy.ops.wm.collada_import(filepath=self.filepath, keep_bind_info=self.keep_bind_info, import_units=self.import_units, fix_orientation=self.fix_orientation, find_chains=self.find_chains, auto_connect=self.auto_connect, min_chain_length=self.min_chain_length)
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
 class UNREGI_PT_menuButton(bpy.types.Panel):
     bl_idname = "UNREGI_PT_menuButton"
@@ -391,10 +405,12 @@ class UNREGI_MT_mainMenu(bpy.types.Menu):
         layout.label(text='unregis Tools')
         layout.separator()
         layout.label(text='View', **icons_dict["view"])
-        if any(o.type == 'MESH' for o in context.selected_objects):
+        num_mesh_selected = sum(1 for o in context.selected_objects if o.type == 'MESH')
+        if num_mesh_selected:
             layout.operator('unregi.remmatslot', text='Remove unused Materialslots')
             layout.label(text='Merge', **icons_dict["merge"])
-            layout.operator('unregi.mergemesh', text='Merge Objects')
+            if num_mesh_selected > 1:
+                layout.operator('unregi.mergemesh', text='Merge Objects')
             layout.operator('unregi.mergematslot', text='Merge Same Materials')
             layout.label(text='Physics Shape', **icons_dict["physics"])
             layout.operator('unregi.convexhull', text='Create Convex Hulls')
@@ -407,8 +423,8 @@ class UNREGI_MT_mainMenu(bpy.types.Menu):
             layout.operator('unregi.makequads', text='Triangles to Quads')
         else:
             layout.operator('unregi.remmat', text='Remove unused Materials')
-            #layout.label(text='Import/Export', **icons_dict["import"])
-            #layout.operator('unregi.daeimport', text='Import Collada')
+            layout.label(text='Import/Export', **icons_dict["import"])
+            layout.operator('unregi.daeimport', text='Import Collada')
 
 classes = (
     UNREGI_OT_slMakeTris,
@@ -422,7 +438,7 @@ classes = (
     UNREGI_OT_slConvexHull,
     UNREGI_OT_slDecimate,
     UNREGI_OT_slDeleteLoose,
-    #UNREGI_OT_slDaeImport,
+    UNREGI_OT_slDaeImport,
     UNREGI_MT_mainMenu,
     UNREGI_PT_menuButton,
 )
