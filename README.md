@@ -1,8 +1,8 @@
 # unregis Tools
 Blender AddOn and script (does the same thing as the AddOn) for optimizing and simplfying meshes for blender for use in OpenSim and SL.
-## Blender 2.7x
+### Blender 2.7x
 ![Screenshot-279](images/screenshot-279.png)
-## Blender 2.80
+### Blender 2.80
 ![Screenshot-280](images/screenshot-280.png)
 
 ## What do the buttons do
