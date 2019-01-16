@@ -82,7 +82,7 @@ class UNREGI_OT_slMergeMaterials(bpy.types.Operator):
     bl_idname = "unregi.mergematslot"
     bl_label = "Merge Material slots that use same textures"
     bl_options = {'REGISTER', 'UNDO'}
-    diffuse: bpy.props.BoolProperty(name="Unique Diffuse Colors", default=False)
+    diffuse: bpy.props.BoolProperty(name="Unique Diffuse Colors", default=True)
 
     def getDiffuseColorOfMaterialSlot(self, matslot):
         color = matslot.material.diffuse_color
