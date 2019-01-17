@@ -73,7 +73,6 @@ class UNREGI_OT_slMergeMeshes(bpy.types.Operator):
         #TODO do we really not need this in 2.80?
         #ctx['selected_editable_bases'] = [context.scene.object_bases[o.name] for o in meshlist]
         bpy.ops.object.join(ctx)
-        context.view_layer.update()
         self.report({'INFO'}, "%d meshes joined" % (len(meshlist),))
         return {'FINISHED'}
 
@@ -226,7 +225,6 @@ class UNREGI_OT_slConvexHull(bpy.types.Operator):
             while slot < nummat:
                 bpy.ops.object.material_slot_remove()
                 slot += 1
-        context.view_layer.update()
         return {'FINISHED'}
 
 class UNREGI_OT_slMakeTris(bpy.types.Operator):
@@ -295,34 +293,24 @@ class UNREGI_OT_slPlanarDecimate(bpy.types.Operator):
     bl_label = "Planar Decimate over selected objects"
     bl_options = {'REGISTER', 'UNDO'}
     angle: bpy.props.IntProperty(name="Max Angle", default=5, min=0, max=25)
-
-    def cleanAllDecimateModifiers(self, obj):
-        for m in obj.modifiers:
-            if(m.type=="DECIMATE"):
-                obj.modifiers.remove(modifier=m)
-
+    
     def execute(self, context):
-        ctx = context.copy()
+        angle_radian = self.angle * 2 * math.pi / 360
         objects = [o for o in context.selected_objects if o.type == 'MESH']
         if not objects:
             self.report({'WARNING'}, "No meshes selected")
             return {'CANCELLED'}
-        modifiers = []
-        modifierName='DecimateMod'
         num_before = 0
         num_after = 0
-        for o in objects:
-            num_before += len(o.data.vertices)
-            self.cleanAllDecimateModifiers(o)
-            ctx['acive_object'] = o
-            modifier = o.modifiers.new(modifierName,'DECIMATE')
-            modifier.decimate_type = 'DISSOLVE'
-            modifier.angle_limit = self.angle * 2 * math.pi / 360
-            print("Planar decimate of mesh " + o.name + " by " + str(modifier.angle_limit))
-            bpy.ops.object.modifier_apply(modifier=modifier.name)
-            num_after += len(o.data.vertices)
+        for obj in objects:
+            num_before += len(obj.data.vertices)
+            context.view_layer.objects.active = obj
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.dissolve_limited(angle_limit=angle_radian, delimit={'NORMAL'})
+            bpy.ops.object.mode_set(mode='OBJECT')
+            num_after += len(obj.data.vertices)
         self.report({'INFO'}, "%d from %d vertices removed" % (num_before - num_after, num_before))
-        context.view_layer.update()
         return {'FINISHED'}
 
 class UNREGI_OT_slDecimate(bpy.types.Operator):
@@ -353,11 +341,21 @@ class UNREGI_OT_slDecimate(bpy.types.Operator):
             ctx['acive_object'] = o
             modifier = o.modifiers.new(modifierName,'DECIMATE')
             modifier.decimate_type = 'COLLAPSE'
+            context.scene.update()
             modifier.ratio = self.ratio
-            bpy.ops.object.modifier_apply(modifier=modifier.name)
+            # other methode of applying all modifiers:
+            # 1:
+            #bpy.ops.object.convert(target='MESH')
+            # 2:
+            #oldmesh = o.data
+            #o.data = o.to_mesh(context.depsgraph, True, 'PREVIEW')
+            #self.cleanAllDecimateModifiers(o)
+            #bpy.data.meshes.remove(oldmesh)
+            # 3 (apply just the used one):
+            #bpy.ops.object.modifier_apply(modifier=modifier.name)
             num_after += len(o.data.vertices)
+        context.scene.update()
         self.report({'INFO'}, "%d from %d vertices removed" % (num_before - num_after, num_before))
-        context.view_layer.update()
         return {'FINISHED'}
 
 class UNREGI_OT_slDaeImport(bpy.types.Operator):
