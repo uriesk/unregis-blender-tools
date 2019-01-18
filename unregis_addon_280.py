@@ -205,7 +205,7 @@ class UNREGI_OT_slConvexHull(bpy.types.Operator):
     """Convert objects to Convex Hulls"""
     bl_idname = "unregi.convexhull"
     bl_label = "Convert selected objects to Convex Hulls"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
@@ -231,7 +231,7 @@ class UNREGI_OT_slMakeTris(bpy.types.Operator):
     """Convert to Triangles"""
     bl_idname = "unregi.maketris"
     bl_label = "Convert selected objects to triangles"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
@@ -251,7 +251,7 @@ class UNREGI_OT_slMakeQuads(bpy.types.Operator):
     """Convert Triangles to Quads"""
     bl_idname = "unregi.makequads"
     bl_label = "Convert selected objects to quads"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
@@ -271,7 +271,7 @@ class UNREGI_OT_slDeleteLoose(bpy.types.Operator):
     """Delete Loose Vertices / Edges / Faces"""
     bl_idname = "unregi.deleteloose"
     bl_label = "Delete loose vertices, edges and faces"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     
     def execute(self, context):
         objects = [o for o in context.selected_objects if o.type == 'MESH']
@@ -291,7 +291,7 @@ class UNREGI_OT_slPlanarDecimate(bpy.types.Operator):
     """Planar Decimate Objects"""
     bl_idname = "unregi.planardec"
     bl_label = "Planar Decimate over selected objects"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     angle: bpy.props.IntProperty(name="Max Angle", default=5, min=0, max=25)
     
     def execute(self, context):
@@ -317,7 +317,7 @@ class UNREGI_OT_slDecimate(bpy.types.Operator):
     """Decimate Objects"""
     bl_idname = "unregi.decimate"
     bl_label = "Decimate over selected objects"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     ratio: bpy.props.FloatProperty(name="Ratio", default=0.2, min=0.0, max=1.0)
 
     def cleanAllDecimateModifiers(self, obj):
@@ -347,7 +347,7 @@ class UNREGI_OT_slDaeImport(bpy.types.Operator):
     """Import Collada File"""
     bl_idname = "unregi.daeimport"
     bl_label = "Import Collada"
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
     import_units: bpy.props.BoolProperty(name="Import Units", default=False)
     fix_orientation: bpy.props.BoolProperty(name="Fix orientation", default=False)
     find_chains: bpy.props.BoolProperty(name="Find chains", default=False)
